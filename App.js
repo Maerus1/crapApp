@@ -1,23 +1,58 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, SafeAreaView, SectionList, StatusBar, View, ActivityIndicator } from 'react-native';
+import styles from './styles/styles';
 
 export default class App extends React.Component {
+  constructor(props){
+    super(props);
+    this.state = {
+      dataSource: [],
+    }
+  }
+
+  readNorris = () => {
+    fetch(`http://api.icndb.com/jokes/random/30`)
+      .then(response => {
+        response.json().then(data => {
+          data.value.forEach(item => {
+            this.setState(prevState => ({
+              dataSource: [...prevState.dataSource, {title: item.id, data: [{joke: item.joke}]}]
+            }))
+          })
+        })
+      })
+  }
+
+  componentWillMount() {
+    this.readNorris();
+  }
+
   render() {
     return (
-      <View style={styles.container}>
-        <Text>Open up App.js to start working on your app!</Text>
-        <Text>Changes you make will automatically reload.</Text>
-        <Text>Shake your phone to open the developer menu.</Text>
-      </View>
+      <SafeAreaView style={styles.container}>
+      <StatusBar hidden={true} />
+        <SectionList
+          renderItem={({item}) => 
+          <View style={styles.itemContainer}>
+            <Text>{item.joke}</Text>
+          </View>
+        }
+          keyExtractor={({item, index}) => item + index}
+          sections={this.state.dataSource}
+          onEndReached={() => {
+            this.readNorris();
+          }
+          }
+          onEndReachedThreshold={0.1}
+          renderSectionFooter={() => {
+            <View>
+              <ActivityIndicator size="small" color="#F00"/>
+            </View>
+          }}
+          
+        />
+      </SafeAreaView>
     );
   }
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
